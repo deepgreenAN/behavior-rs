@@ -47,6 +47,16 @@ pub fn behavior_inner(args: TokenStream, input_trait: &ItemTrait) -> syn::Result
                     }
                 });
                 let fn_name = &fn_sig.ident;
+                let generic_param_names =
+                    fn_sig
+                        .generics
+                        .params
+                        .iter()
+                        .filter_map(|generic_param| match generic_param {
+                            syn::GenericParam::Lifetime(_) => None,
+                            syn::GenericParam::Type(type_param) => Some(&type_param.ident),
+                            syn::GenericParam::Const(const_param) => Some(&const_param.ident),
+                        });
 
                 if fn_sig.asyncness.is_some() {
                     // 非同期の場合
@@ -54,7 +64,7 @@ pub fn behavior_inner(args: TokenStream, input_trait: &ItemTrait) -> syn::Result
                         #(#fn_attrs)*
                         #fn_sig
                         {
-                            #module :: #fn_name ( #(#arg_names),* ).await
+                            #module :: #fn_name :: < #(#generic_param_names),* >( #(#arg_names),* ).await
                         }
                     });
                 } else {
@@ -63,7 +73,7 @@ pub fn behavior_inner(args: TokenStream, input_trait: &ItemTrait) -> syn::Result
                         #(#fn_attrs)*
                         #fn_sig
                         {
-                            #module :: #fn_name ( #(#arg_names),* )
+                            #module :: #fn_name :: < #(#generic_param_names),* >( #(#arg_names),* )
                         }
                     });
                 }

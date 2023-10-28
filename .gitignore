@@ -1,3 +1,5 @@
 /target
 /examples/for_doc.rs
+/examples/debug.rs
+/examples/debug_*.rs
 Cargo.lock

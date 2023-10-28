@@ -10,21 +10,22 @@ pub struct User {
 #[behavior::behavior(modules(original, fake))] // check behaviors
 #[async_trait::async_trait]
 trait MyBehavior {
-    async fn get<T: DeserializeOwned>(url: String) -> T;
-    fn post_user<'a>(url: String, user: &'a User) -> u16;
+    async fn get<'a, T: DeserializeOwned>(url: &'a str) -> T;
+    fn post_user<'a, 'b>(url: &'a str, user: &'b User) -> u16;
 }
 
 mod original {
     use super::User;
+    use serde::de::DeserializeOwned;
 
-    pub async fn get<T: serde::de::DeserializeOwned>(url: String) -> T {
-        let res = reqwest::Client::new().get(&url).send().await.unwrap();
+    pub async fn get<T: DeserializeOwned>(url: &str) -> T {
+        let res = reqwest::Client::new().get(url).send().await.unwrap();
 
         res.json().await.unwrap()
     }
-    pub fn post_user(url: String, user: &User) -> u16 {
+    pub fn post_user<'a, 'b>(url: &'a str, user: &'b User) -> u16 {
         reqwest::blocking::Client::new()
-            .post(&url)
+            .post(url)
             .json(user)
             .send()
             .unwrap()
@@ -35,12 +36,17 @@ mod original {
 
 mod fake {
     use super::User;
+    use serde::de::DeserializeOwned;
 
-    pub async fn get<T: serde::de::DeserializeOwned>(_url: String) -> T {
-        serde_json::from_str("{}").unwrap()
+    pub async fn get<T: DeserializeOwned>(_url: &str) -> T {
+        let user = User {
+            name: "John".to_string(),
+            age: 20,
+        };
+        serde_json::from_str(&serde_json::to_string(&user).unwrap()).unwrap()
     }
 
-    pub fn post_user(_url: String, _user: &User) -> u16 {
+    pub fn post_user(_url: &str, _user: &User) -> u16 {
         200
     }
 }
@@ -54,8 +60,8 @@ mod fake {
 fn main() {
     // The following is not recommended.
     async {
-        let user: User = <FakeModuleMyBehavior as MyBehavior>::get("some_url".to_string()).await;
-        let _ = <OriginalModuleMyBehavior as MyBehavior>::post_user("some_url".to_string(), &user);
+        let user: User = <FakeModuleMyBehavior as MyBehavior>::get("some_url").await;
+        let _ = <OriginalModuleMyBehavior as MyBehavior>::post_user("some_url", &user);
     };
 
     {};
