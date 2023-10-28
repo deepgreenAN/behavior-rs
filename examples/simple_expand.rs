@@ -17,7 +17,7 @@ trait MyBehavior {
 }
 
 mod original {
-    use crate::User;
+    use super::User;
     use serde::de::DeserializeOwned;
 
     pub async fn get<T: DeserializeOwned>(url: String) -> T {
@@ -37,7 +37,7 @@ mod original {
 }
 
 mod fake {
-    use crate::User;
+    use super::User;
     use serde::de::DeserializeOwned;
 
     /// fake get function

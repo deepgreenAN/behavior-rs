@@ -15,7 +15,7 @@ trait MyBehavior {
 }
 
 mod original {
-    use crate::User;
+    use super::User;
 
     pub async fn get<T: serde::de::DeserializeOwned>(url: String) -> T {
         let res = reqwest::Client::new().get(&url).send().await.unwrap();
@@ -34,7 +34,7 @@ mod original {
 }
 
 mod fake {
-    use crate::User;
+    use super::User;
 
     pub async fn get<T: serde::de::DeserializeOwned>(_url: String) -> T {
         serde_json::from_str("{}").unwrap()
